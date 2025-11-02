@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* DARK AI Theme - Deep Black + Cyan Blue + Electric Green */
+    --background: 220 90% 3%;
+    --foreground: 0 0% 95%;
+
+    --card: 220 50% 6%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 220 50% 6%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 190 100% 50%;
+    --primary-foreground: 220 90% 3%;
+    
+    --primary-glow: 190 100% 70%;
+
+    --secondary: 140 100% 45%;
+    --secondary-foreground: 220 90% 3%;
+
+    --muted: 220 30% 12%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 190 100% 50%;
+    --accent-foreground: 220 90% 3%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 30% 18%;
+    --input: 220 30% 18%;
+    --ring: 190 100% 50%;
+
+    --radius: 1rem;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(190 100% 50%), hsl(140 100% 45%));
+    --gradient-glow: linear-gradient(135deg, hsl(190 100% 50% / 0.3), hsl(140 100% 45% / 0.3));
+    
+    /* Shadows */
+    --shadow-glow: 0 0 40px hsl(190 100% 50% / 0.5);
+    --shadow-glow-strong: 0 0 60px hsl(190 100% 50% / 0.7);
+    --shadow-green-glow: 0 0 40px hsl(140 100% 45% / 0.5);
+  }
+
+  .dark {
+    --background: 220 90% 3%;
+    --foreground: 0 0% 95%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+  }
+
+  /* Performance optimizations */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Optimize animations */
+  [class*="animate-"] {
+    will-change: transform, opacity;
+  }
+
+  /* Input optimization */
+  input, textarea {
+    will-change: contents;
+  }
+
+  /* Smooth scrolling */
+  * {
+    scroll-behavior: smooth;
+  }
+}
