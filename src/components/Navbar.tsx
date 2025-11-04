@@ -279,6 +279,15 @@ export const Navbar = () => {
                 </PopoverContent>
               </Popover>
 
+              {isAdmin && (
+                <Link to="/admin">
+                  <Button size="sm" className="gap-2">
+                    <Shield className="w-4 h-4" />
+                    <span className="hidden md:inline">Admin</span>
+                  </Button>
+                </Link>
+              )}
+              
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="sm" className="rounded-xl p-2">
@@ -290,15 +299,15 @@ export const Navbar = () => {
                   </Button>
                 </SheetTrigger>
                 <SheetPortal>
-                  <SheetPrimitive.Content className="fixed z-50 gap-4 bg-card p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 inset-y-0 right-0 h-auto w-64 max-h-[320px] top-16 rounded-bl-2xl border-l border-b data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right">
-                    <div className="flex flex-col gap-6 pb-6">
-                      <Link to="/community" className="text-lg font-semibold hover:text-primary transition-colors">
+                  <SheetPrimitive.Content className="fixed z-50 gap-4 bg-card p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 inset-y-0 right-0 h-auto w-72 top-16 rounded-bl-2xl border-l border-b data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right">
+                    <div className="flex flex-col gap-4">
+                      <Link to="/community" className="text-base font-semibold hover:text-primary transition-colors">
                         Community Creations
                       </Link>
-                      <a href="#features" className="text-lg font-semibold hover:text-primary transition-colors">
+                      <a href="#features" className="text-base font-semibold hover:text-primary transition-colors">
                         Features
                       </a>
-                      <a href="#how-it-works" className="text-lg font-semibold hover:text-primary transition-colors">
+                      <a href="#how-it-works" className="text-base font-semibold hover:text-primary transition-colors">
                         How It Works
                       </a>
                     </div>
@@ -329,18 +338,18 @@ export const Navbar = () => {
                   </Button>
                 </SheetTrigger>
                 <SheetPortal>
-                  <SheetPrimitive.Content className="fixed z-50 gap-4 bg-card p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 inset-y-0 right-0 h-auto w-64 max-h-[280px] top-16 rounded-bl-2xl border-l border-b data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right">
-                    <div className="flex flex-col gap-6 pb-6">
-                      <Link to="/community" className="text-lg font-semibold hover:text-primary transition-colors">
+                  <SheetPrimitive.Content className="fixed z-50 gap-4 bg-card p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 inset-y-0 right-0 h-auto w-72 top-16 rounded-bl-2xl border-l border-b data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right">
+                    <div className="flex flex-col gap-4">
+                      <Link to="/community" className="text-base font-semibold hover:text-primary transition-colors">
                         Community Creations
                       </Link>
-                      <Link to="/auth" className="text-lg font-semibold hover:text-primary transition-colors">
+                      <Link to="/auth" className="text-base font-semibold hover:text-primary transition-colors">
                         Login
                       </Link>
-                      <a href="#features" className="text-lg font-semibold hover:text-primary transition-colors">
+                      <a href="#features" className="text-base font-semibold hover:text-primary transition-colors">
                         Features
                       </a>
-                      <a href="#how-it-works" className="text-lg font-semibold hover:text-primary transition-colors">
+                      <a href="#how-it-works" className="text-base font-semibold hover:text-primary transition-colors">
                         How It Works
                       </a>
                     </div>
