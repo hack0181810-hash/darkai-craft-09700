@@ -239,9 +239,10 @@ const Admin = () => {
           </div>
 
           <Tabs defaultValue="users" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="users">User Management</TabsTrigger>
               <TabsTrigger value="credits">Give Credits</TabsTrigger>
+              <TabsTrigger value="whitelist">Whitelist Management</TabsTrigger>
             </TabsList>
 
             <TabsContent value="users" className="space-y-4">
@@ -317,6 +318,64 @@ const Admin = () => {
                     <DollarSign className="w-4 h-4 mr-2" />
                     Give Credits
                   </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="whitelist" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Whitelist Users</CardTitle>
+                  <CardDescription>Grant admin access to users</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="whitelist-user">Select User to Whitelist</Label>
+                    <select
+                      id="whitelist-user"
+                      className="w-full p-2 rounded-md border bg-background text-sm md:text-base"
+                      onChange={async (e) => {
+                        const userId = e.target.value;
+                        if (!userId) return;
+
+                        try {
+                          const { error } = await supabase
+                            .from('user_roles')
+                            .insert({ user_id: userId, role: 'admin' })
+                            .select()
+                            .single();
+
+                          if (error) {
+                            if (error.code === '23505') {
+                              toast.error('User is already whitelisted');
+                            } else {
+                              throw error;
+                            }
+                          } else {
+                            toast.success('User whitelisted successfully');
+                            e.target.value = '';
+                            await fetchUsers();
+                          }
+                        } catch (error) {
+                          console.error('Error whitelisting user:', error);
+                          toast.error('Failed to whitelist user');
+                        }
+                      }}
+                    >
+                      <option value="">Choose a user...</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="p-4 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground">
+                      Whitelisted users will gain admin access and can see the admin dashboard.
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
