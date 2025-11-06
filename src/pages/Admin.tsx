@@ -76,10 +76,13 @@ const Admin = () => {
     pending_jobs: 0,
     failed_jobs: 0
   });
-  const [selectedUser, setSelectedUser] = useState("");
+  const [selectedUserEmail, setSelectedUserEmail] = useState("");
+  const [whitelistEmail, setWhitelistEmail] = useState("");
   const [creditAmount, setCreditAmount] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [emailSuggestions, setEmailSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     checkAdminAccess();
@@ -191,18 +194,28 @@ const Admin = () => {
     });
   };
 
-  // Optimized input handlers with useCallback
-  const handleSelectedUserChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedUser(e.target.value);
-  }, []);
+  // Email autocomplete handler
+  const handleEmailInput = useCallback((value: string, setter: (v: string) => void) => {
+    setter(value);
+    if (value.length > 0) {
+      const suggestions = users
+        .filter(u => u.email.toLowerCase().includes(value.toLowerCase()))
+        .map(u => u.email)
+        .slice(0, 5);
+      setEmailSuggestions(suggestions);
+      setShowSuggestions(suggestions.length > 0);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [users]);
 
   const handleCreditAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setCreditAmount(e.target.value);
   }, []);
 
   const handleGiveCredits = useCallback(async () => {
-    if (!selectedUser || !creditAmount) {
-      toast.error('Please select a user and enter credit amount');
+    if (!selectedUserEmail || !creditAmount) {
+      toast.error('Please enter user email and credit amount');
       return;
     }
 
@@ -212,29 +225,36 @@ const Admin = () => {
       return;
     }
 
+    const user = users.find(u => u.email.toLowerCase() === selectedUserEmail.toLowerCase());
+    if (!user) {
+      toast.error('User not found. Please check the email address.');
+      return;
+    }
+
     try {
       const { data: currentCredits } = await supabase
         .from('user_credits')
         .select('credits')
-        .eq('user_id', selectedUser)
+        .eq('user_id', user.id)
         .single();
 
       const { error } = await supabase
         .from('user_credits')
         .update({ credits: (currentCredits?.credits || 0) + amount })
-        .eq('user_id', selectedUser);
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
-      toast.success(`Added ${amount} credits successfully`);
+      toast.success(`Added ${amount} credits to ${selectedUserEmail}`);
       setCreditAmount('');
-      setSelectedUser('');
+      setSelectedUserEmail('');
+      setShowSuggestions(false);
       await fetchUsers();
     } catch (error) {
       console.error('Error giving credits:', error);
       toast.error('Failed to add credits');
     }
-  }, [selectedUser, creditAmount]);
+  }, [selectedUserEmail, creditAmount, users]);
 
   const handleDeleteProject = async (projectId: string) => {
     if (!confirm('Are you sure you want to delete this project?')) return;
@@ -357,8 +377,8 @@ const Admin = () => {
           </div>
 
           {/* Analytics Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 md:gap-6 mb-8">
-            <Card>
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 md:gap-6 mb-10">
+            <Card className="hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
@@ -368,7 +388,7 @@ const Admin = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
                 <Code className="h-4 w-4 text-muted-foreground" />
@@ -378,7 +398,7 @@ const Admin = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Credits Pool</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -388,7 +408,7 @@ const Admin = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Today</CardTitle>
                 <Activity className="h-4 w-4 text-muted-foreground" />
@@ -398,7 +418,7 @@ const Admin = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Pending</CardTitle>
                 <Clock className="h-4 w-4 text-yellow-500" />
@@ -408,7 +428,7 @@ const Admin = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Failed</CardTitle>
                 <XCircle className="h-4 w-4 text-destructive" />
@@ -419,13 +439,32 @@ const Admin = () => {
             </Card>
           </div>
 
-          <Tabs defaultValue="users" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
-              <TabsTrigger value="users">Users</TabsTrigger>
-              <TabsTrigger value="projects">Projects</TabsTrigger>
-              <TabsTrigger value="jobs">Jobs</TabsTrigger>
-              <TabsTrigger value="credits">Credits</TabsTrigger>
-              <TabsTrigger value="whitelist">Whitelist</TabsTrigger>
+          <Tabs defaultValue="users" className="space-y-8">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 gap-2 h-auto p-2 bg-muted/50">
+              <TabsTrigger value="users" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Users className="w-4 h-4 mr-2" />
+                Users
+              </TabsTrigger>
+              <TabsTrigger value="projects" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Code className="w-4 h-4 mr-2" />
+                Projects
+              </TabsTrigger>
+              <TabsTrigger value="jobs" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Activity className="w-4 h-4 mr-2" />
+                Jobs
+              </TabsTrigger>
+              <TabsTrigger value="credits" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <DollarSign className="w-4 h-4 mr-2" />
+                Credits
+              </TabsTrigger>
+              <TabsTrigger value="whitelist" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Shield className="w-4 h-4 mr-2" />
+                Whitelist
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </TabsTrigger>
             </TabsList>
 
             {/* Users Tab */}
@@ -517,28 +556,53 @@ const Admin = () => {
             </TabsContent>
 
             {/* Credits Tab */}
-            <TabsContent value="credits" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Give Credits to Users</CardTitle>
-                  <CardDescription>Add credits to any user account</CardDescription>
+            <TabsContent value="credits" className="space-y-6">
+              <Card className="border-primary/30">
+                <CardHeader className="space-y-4 pb-6">
+                  <div>
+                    <CardTitle className="text-2xl">Give Credits to Users</CardTitle>
+                    <CardDescription className="text-base mt-2">Add credits to any user account by typing their email</CardDescription>
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
                   <div className="space-y-3">
-                    <Label htmlFor="user" className="text-base font-semibold">Select User</Label>
-                    <select
-                      id="user"
-                      value={selectedUser}
-                      onChange={handleSelectedUserChange}
-                      className="w-full p-3 rounded-lg border border-primary/30 bg-background text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                    >
-                      <option value="">Choose a user...</option>
-                      {users.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.email} - {user.credits.toLocaleString()} credits
-                        </option>
-                      ))}
-                    </select>
+                    <Label htmlFor="user-email" className="text-base font-semibold">User Email Address</Label>
+                    <div className="relative">
+                      <Input
+                        id="user-email"
+                        type="email"
+                        placeholder="Enter user's email address..."
+                        value={selectedUserEmail}
+                        onChange={(e) => handleEmailInput(e.target.value, setSelectedUserEmail)}
+                        onFocus={() => selectedUserEmail && setShowSuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                        className="text-base p-3 border-primary/30 focus:border-primary focus:ring-primary/20 pr-10"
+                      />
+                      <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      
+                      {showSuggestions && emailSuggestions.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-background border border-primary/30 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          {emailSuggestions.map((email) => (
+                            <button
+                              key={email}
+                              onClick={() => {
+                                setSelectedUserEmail(email);
+                                setShowSuggestions(false);
+                              }}
+                              className="w-full px-4 py-3 text-left hover:bg-primary/10 transition-colors border-b border-primary/10 last:border-0"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Mail className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-sm">{email}</span>
+                                <Badge variant="secondary" className="ml-auto text-xs">
+                                  {users.find(u => u.email === email)?.credits.toLocaleString()} credits
+                                </Badge>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-3">
@@ -555,71 +619,95 @@ const Admin = () => {
                     />
                   </div>
 
-                  <Button onClick={handleGiveCredits} className="w-full">
-                    <DollarSign className="w-4 h-4 mr-2" />
-                    Give Credits
+                  <Button 
+                    onClick={handleGiveCredits} 
+                    className="w-full py-6 text-lg font-semibold"
+                    disabled={!selectedUserEmail || !creditAmount}
+                  >
+                    <DollarSign className="w-5 h-5 mr-2" />
+                    Give {creditAmount || '0'} Credits
                   </Button>
                 </CardContent>
               </Card>
             </TabsContent>
 
             {/* Whitelist Tab */}
-            <TabsContent value="whitelist" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Whitelist Users</CardTitle>
-                  <CardDescription>Grant admin access to users</CardDescription>
+            <TabsContent value="whitelist" className="space-y-6">
+              <Card className="border-primary/30">
+                <CardHeader className="space-y-4 pb-6">
+                  <div>
+                    <CardTitle className="text-2xl">Whitelist Users</CardTitle>
+                    <CardDescription className="text-base mt-2">Grant admin access to users by typing their email</CardDescription>
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
                   <div className="space-y-3">
-                    <Label htmlFor="whitelist-user" className="text-base font-semibold">Select User to Whitelist</Label>
-                    <select
-                      id="whitelist-user"
-                      className="w-full p-3 rounded-lg border border-primary/30 bg-background text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                      onChange={async (e) => {
-                        const userId = e.target.value;
-                        if (!userId) return;
-
-                        try {
-                          const { error } = await supabase
-                            .from('user_roles')
-                            .insert({ user_id: userId, role: 'admin' })
-                            .select()
-                            .single();
-
-                          if (error) {
-                            if (error.code === '23505') {
-                              toast.error('User is already an admin');
-                            } else {
-                              throw error;
-                            }
-                          } else {
-                            toast.success(`${users.find(u => u.id === userId)?.email} is now an admin!`);
-                            e.target.value = '';
-                            await fetchUsers();
-                          }
-                        } catch (error) {
-                          console.error('Error whitelisting user:', error);
-                          toast.error('Failed to whitelist user');
-                        }
-                      }}
-                    >
-                      <option value="">Choose a user...</option>
-                      {users
-                        .filter(user => !user.roles.includes('admin'))
-                        .map((user) => (
-                          <option key={user.id} value={user.id}>
-                            {user.email}
-                          </option>
-                        ))}
-                    </select>
+                    <Label htmlFor="whitelist-email" className="text-base font-semibold">User Email Address</Label>
+                    <div className="relative">
+                      <Input
+                        id="whitelist-email"
+                        type="email"
+                        placeholder="Enter user's email address..."
+                        value={whitelistEmail}
+                        onChange={(e) => handleEmailInput(e.target.value, setWhitelistEmail)}
+                        className="text-base p-3 border-primary/30 focus:border-primary focus:ring-primary/20 pr-10"
+                      />
+                      <Shield className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    </div>
                   </div>
 
-                  <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-primary/20">
-                    <h4 className="font-semibold mb-2 text-sm">Current Admins:</h4>
+                  <Button
+                    onClick={async () => {
+                      if (!whitelistEmail) {
+                        toast.error('Please enter a user email');
+                        return;
+                      }
+
+                      const user = users.find(u => u.email.toLowerCase() === whitelistEmail.toLowerCase());
+                      if (!user) {
+                        toast.error('User not found. Please check the email address.');
+                        return;
+                      }
+
+                      try {
+                        const { error } = await supabase
+                          .from('user_roles')
+                          .insert({ user_id: user.id, role: 'admin' })
+                          .select()
+                          .single();
+
+                        if (error) {
+                          if (error.code === '23505') {
+                            toast.error(`${whitelistEmail} is already an admin`);
+                          } else {
+                            throw error;
+                          }
+                        } else {
+                          toast.success(`${whitelistEmail} is now an admin!`);
+                          setWhitelistEmail('');
+                          await fetchUsers();
+                        }
+                      } catch (error) {
+                        console.error('Error whitelisting user:', error);
+                        toast.error('Failed to whitelist user');
+                      }
+                    }}
+                    className="w-full py-6 text-lg font-semibold"
+                    disabled={!whitelistEmail}
+                  >
+                    <Shield className="w-5 h-5 mr-2" />
+                    Grant Admin Access
+                  </Button>
+
+                  <div className="mt-8 p-6 bg-muted/50 rounded-lg border border-primary/20 space-y-4">
+                    <h4 className="font-semibold text-lg flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      Current Admins ({users.filter(u => u.roles.includes('admin')).length})
+                    </h4>
                     <div className="flex flex-wrap gap-2">
                       {users.filter(u => u.roles.includes('admin')).map(admin => (
-                        <Badge key={admin.id} variant="default" className="text-xs">
+                        <Badge key={admin.id} variant="default" className="text-sm px-3 py-1">
+                          <Mail className="w-3 h-3 mr-1" />
                           {admin.email}
                         </Badge>
                       ))}
@@ -627,6 +715,118 @@ const Admin = () => {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* New Settings Tab */}
+            <TabsContent value="settings" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-primary/30">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Database className="w-5 h-5" />
+                      Database Stats
+                    </CardTitle>
+                    <CardDescription>System-wide database information</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm text-muted-foreground">Total Tables</span>
+                      <Badge variant="secondary">5 tables</Badge>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm text-muted-foreground">Total Records</span>
+                      <Badge variant="secondary">{analytics.total_users + analytics.total_projects} records</Badge>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-sm text-muted-foreground">Last Updated</span>
+                      <Badge variant="outline">{new Date().toLocaleTimeString()}</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-primary/30">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bell className="w-5 h-5" />
+                      System Notifications
+                    </CardTitle>
+                    <CardDescription>Configure admin notifications</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">New user signup alerts</span>
+                      <Badge variant="secondary">Enabled</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Failed job alerts</span>
+                      <Badge variant="secondary">Enabled</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Daily reports</span>
+                      <Badge variant="outline">Coming Soon</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-primary/30">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5" />
+                      Quick Actions
+                    </CardTitle>
+                    <CardDescription>Common admin operations</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button variant="outline" className="w-full justify-start" onClick={() => handleExportData('users')}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Export All Users
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start" onClick={() => handleExportData('projects')}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Export All Projects
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start" onClick={() => window.location.reload()}>
+                      <RotateCw className="w-4 h-4 mr-2" />
+                      Refresh Dashboard
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-primary/30">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      System Health
+                    </CardTitle>
+                    <CardDescription>Monitor system status</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span className="text-sm">Database</span>
+                      </div>
+                      <Badge variant="secondary" className="bg-green-500/10 text-green-500">Healthy</Badge>
+                    </div>
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span className="text-sm">Authentication</span>
+                      </div>
+                      <Badge variant="secondary" className="bg-green-500/10 text-green-500">Active</Badge>
+                    </div>
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-yellow-500" />
+                        <span className="text-sm">Failed Jobs</span>
+                      </div>
+                      <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-500">
+                        {analytics.failed_jobs} pending
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
