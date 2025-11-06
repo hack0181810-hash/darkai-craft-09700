@@ -112,10 +112,11 @@ const GenerationFormComponent = ({ onGenerate, isGenerating }: GenerationFormPro
               placeholder="Example: A simple economy plugin with commands for /balance, /pay, and shops. Add a shop GUI with items players can buy and sell..."
               value={description}
               onChange={handleDescriptionChange}
-              className="min-h-40 text-base resize-none border-primary/30 focus:border-primary focus:ring-primary/20"
+              className="min-h-40 text-base resize-none border-primary/30 focus:border-primary focus:ring-primary/20 transition-all"
               disabled={isGenerating}
               autoComplete="off"
-              spellCheck={false}
+              spellCheck="true"
+              maxLength={5000}
             />
             <p className="text-sm text-muted-foreground">
               Be specific! Include commands, features, and behaviors you want.

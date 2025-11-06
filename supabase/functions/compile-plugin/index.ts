@@ -22,20 +22,27 @@ serve(async (req) => {
     
     console.log('Compiling project:', project_name);
 
-    // NOTE: This creates a SIMULATED JAR for demonstration purposes only
-    // Real Minecraft plugins require actual Java compilation with:
-    // 1. Java SDK (JDK 17+ for modern MC versions)
-    // 2. Gradle or Maven build system
-    // 3. Proper dependency resolution
+    // ⚠️ IMPORTANT: This creates a DEMO JAR for preview purposes only!
     // 
-    // To create a REAL working plugin JAR:
-    // 1. Download the source files
-    // 2. Install Java JDK and Gradle on your computer
-    // 3. Run: ./gradlew build
-    // 4. Find the compiled JAR in build/libs/
-    //
-    // The JAR created here contains source files and placeholders,
-    // NOT compiled bytecode, so it WON'T work on a Minecraft server
+    // This JAR contains:
+    // ✓ Your plugin source code (.java files)
+    // ✓ Configuration files (plugin.yml, config.yml)
+    // ✓ Build scripts (build.gradle, pom.xml)
+    // ✗ NOT compiled bytecode (.class files)
+    // ✗ NOT ready to run on a Minecraft server
+    // 
+    // TO CREATE A WORKING PLUGIN JAR:
+    // 1. Download the project files from the sandbox
+    // 2. Install Java JDK 17+ on your computer
+    // 3. Install Gradle or Maven
+    // 4. Run: ./gradlew build (or mvn package)
+    // 5. Get the compiled JAR from build/libs/ folder
+    // 
+    // Why can't we compile here?
+    // - Requires Java compiler (javac) with full JDK
+    // - Needs Minecraft server APIs and dependencies
+    // - Compilation can take minutes for large plugins
+    // - Edge functions have time and resource limits
     
     const jarFiles: Array<{ path: string; content: string }> = [];
     
@@ -103,10 +110,23 @@ Main-Class: ${findMainClass(files)}
       JSON.stringify({ 
         success: true, 
         jar_data: base64,
-        jar_name: `${project_name}-DEMO-1.0.jar`,
+        jar_name: `${project_name}-DEMO-v1.0.jar`,
         size: data.length,
-        message: 'Demo JAR created (NOT a real compiled plugin)',
-        note: 'This is a simulated JAR. To create a real working plugin, download the source files and compile them locally using Gradle or Maven with Java JDK installed.'
+        is_demo: true,
+        message: '⚠️ DEMO JAR - Contains source code only, not compiled bytecode',
+        instructions: {
+          title: 'To compile a working plugin JAR:',
+          steps: [
+            '1. Download project files from sandbox',
+            '2. Install Java JDK 17+ from adoptium.net',
+            '3. Install Gradle from gradle.org',
+            '4. Open terminal in project folder',
+            '5. Run: ./gradlew build (or gradlew.bat build on Windows)',
+            '6. Get compiled JAR from build/libs/ folder',
+            '7. Upload to your Minecraft server plugins folder'
+          ],
+          documentation: 'See README.md in the downloaded files for detailed instructions'
+        }
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

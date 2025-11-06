@@ -356,51 +356,8 @@ const Admin = () => {
             <p className="text-sm md:text-base text-muted-foreground">Manage users, credits, and view analytics</p>
           </div>
 
-          {/* Analytics Cards - Optimized grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{analytics.total_users}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
-                <Code className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{analytics.total_projects}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Credits Distributed</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{analytics.total_credits_distributed.toLocaleString()}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Projects Today</CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{analytics.projects_today}</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Enhanced Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 md:gap-6 mb-6 md:mb-8">
+          {/* Analytics Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 md:gap-6 mb-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -482,7 +439,7 @@ const Admin = () => {
                       placeholder="Search users by email or ID..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="max-w-sm"
+                      className="max-w-sm border-primary/30 focus:border-primary focus:ring-primary/20 transition-all"
                     />
                     <Button onClick={() => handleExportData('users')} variant="outline">
                       <Download className="h-4 w-4 mr-2" />
@@ -567,32 +524,34 @@ const Admin = () => {
                   <CardDescription>Add credits to any user account</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="user">Select User</Label>
+                  <div className="space-y-3">
+                    <Label htmlFor="user" className="text-base font-semibold">Select User</Label>
                     <select
                       id="user"
                       value={selectedUser}
                       onChange={handleSelectedUserChange}
-                      className="w-full p-2 rounded-md border bg-background text-sm md:text-base"
+                      className="w-full p-3 rounded-lg border border-primary/30 bg-background text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                     >
                       <option value="">Choose a user...</option>
                       {users.map((user) => (
                         <option key={user.id} value={user.id}>
-                          {user.email} (Current: {user.credits.toLocaleString()})
+                          {user.email} - {user.credits.toLocaleString()} credits
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="credits">Credit Amount</Label>
+                  <div className="space-y-3">
+                    <Label htmlFor="credits" className="text-base font-semibold">Credit Amount</Label>
                     <Input
                       id="credits"
                       type="number"
-                      placeholder="Enter amount"
+                      min="1"
+                      max="100000"
+                      placeholder="Enter amount (e.g., 1000)"
                       value={creditAmount}
                       onChange={handleCreditAmountChange}
-                      className="text-sm md:text-base"
+                      className="text-base p-3 border-primary/30 focus:border-primary focus:ring-primary/20"
                     />
                   </div>
 
@@ -612,11 +571,11 @@ const Admin = () => {
                   <CardDescription>Grant admin access to users</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="whitelist-user">Select User to Whitelist</Label>
+                  <div className="space-y-3">
+                    <Label htmlFor="whitelist-user" className="text-base font-semibold">Select User to Whitelist</Label>
                     <select
                       id="whitelist-user"
-                      className="w-full p-2 rounded-md border bg-background text-sm md:text-base"
+                      className="w-full p-3 rounded-lg border border-primary/30 bg-background text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                       onChange={async (e) => {
                         const userId = e.target.value;
                         if (!userId) return;
@@ -630,12 +589,12 @@ const Admin = () => {
 
                           if (error) {
                             if (error.code === '23505') {
-                              toast.error('User is already whitelisted');
+                              toast.error('User is already an admin');
                             } else {
                               throw error;
                             }
                           } else {
-                            toast.success('User whitelisted successfully');
+                            toast.success(`${users.find(u => u.id === userId)?.email} is now an admin!`);
                             e.target.value = '';
                             await fetchUsers();
                           }
@@ -646,18 +605,25 @@ const Admin = () => {
                       }}
                     >
                       <option value="">Choose a user...</option>
-                      {users.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.email}
-                        </option>
-                      ))}
+                      {users
+                        .filter(user => !user.roles.includes('admin'))
+                        .map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.email}
+                          </option>
+                        ))}
                     </select>
                   </div>
 
-                  <div className="p-4 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground">
-                      Whitelisted users will gain admin access and can see the admin dashboard.
-                    </p>
+                  <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-primary/20">
+                    <h4 className="font-semibold mb-2 text-sm">Current Admins:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {users.filter(u => u.roles.includes('admin')).map(admin => (
+                        <Badge key={admin.id} variant="default" className="text-xs">
+                          {admin.email}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
