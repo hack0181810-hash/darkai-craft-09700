@@ -44,56 +44,13 @@ const GenerationFormComponent = ({ onGenerate, isGenerating }: GenerationFormPro
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center justify-center min-h-screen p-6 relative"
+      className="flex items-center justify-center min-h-screen p-6"
     >
-      {/* Animated background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[150px]"
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.2, 0.4, 0.2],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-1/3 right-1/4 w-[500px] h-[500px] bg-secondary/20 rounded-full blur-[150px]"
-          animate={{
-            scale: [1.3, 1, 1.3],
-            opacity: [0.2, 0.4, 0.2],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
-        />
-      </div>
-      
-      <Card className="w-full max-w-4xl p-10 border-primary/30 shadow-[var(--shadow-glow-strong)] backdrop-blur-sm bg-card/95 relative z-10">
+      <Card className="w-full max-w-4xl p-10 border-primary/30 shadow-lg backdrop-blur-sm bg-card/95">
         <div className="mb-10 text-center">
-          <motion.div 
-            className="inline-flex items-center justify-center p-5 rounded-3xl bg-gradient-to-br from-primary to-secondary mb-6 shadow-[var(--shadow-glow-strong)]"
-            animate={{
-              boxShadow: [
-                '0 0 30px hsl(190 100% 50% / 0.6)',
-                '0 0 50px hsl(190 100% 50% / 0.8)',
-                '0 0 30px hsl(190 100% 50% / 0.6)',
-              ]
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
+          <div className="inline-flex items-center justify-center p-5 rounded-3xl bg-gradient-to-br from-primary to-secondary mb-6 shadow-lg">
             <Sparkles className="w-10 h-10 text-white" />
-          </motion.div>
+          </div>
           <h2 className="text-5xl md:text-6xl font-black mb-4 bg-gradient-to-r from-primary via-primary-glow to-secondary bg-clip-text text-transparent">
             Create Your Plugin
           </h2>
@@ -112,10 +69,11 @@ const GenerationFormComponent = ({ onGenerate, isGenerating }: GenerationFormPro
               placeholder="Example: A simple economy plugin with commands for /balance, /pay, and shops. Add a shop GUI with items players can buy and sell..."
               value={description}
               onChange={handleDescriptionChange}
-              className="min-h-64 text-lg resize-y border-primary/30 focus:border-primary focus:ring-primary/20 transition-all leading-relaxed"
+              className="min-h-64 text-lg resize-y border-primary/30 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors leading-relaxed"
+              style={{ willChange: 'contents' }}
               disabled={isGenerating}
               autoComplete="off"
-              spellCheck="true"
+              spellCheck={true}
               maxLength={5000}
               autoFocus
             />
